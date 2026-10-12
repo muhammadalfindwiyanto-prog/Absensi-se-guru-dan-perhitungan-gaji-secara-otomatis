@@ -1,0 +1,45 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\{AuthController,DashboardController,GuruController,JadwalController,AbsensiController,PayrollController,ReportController,AccountController};
+
+Route::get('/',fn()=>redirect()->route(auth()->check()?'dashboard':'login'));
+Route::middleware('guest')->group(function(){Route::get('/login',[AuthController::class,'show'])->name('login');Route::post('/login',[AuthController::class,'login'])->name('login.submit')->middleware('throttle:8,1');});
+Route::middleware('auth')->group(function(){
+    Route::post('/logout',[AuthController::class,'logout'])->name('logout');
+    Route::get('/dashboard',[DashboardController::class,'index'])->name('dashboard');
+    Route::get('/absensi',[AbsensiController::class,'index'])->name('absensi.index');
+    Route::get('/rekap',[AbsensiController::class,'rekap'])->name('absensi.rekap');
+    Route::get('/penggajian',[PayrollController::class,'index'])->name('payroll.index');
+    Route::get('/slip/{record}',[PayrollController::class,'slip'])->name('payroll.slip');
+    Route::middleware('role:guru')->group(function(){
+        Route::post('/absensi/masuk',[AbsensiController::class,'masuk'])->name('absensi.masuk')->middleware('throttle:10,1');
+        Route::post('/absensi/pulang',[AbsensiController::class,'pulang'])->name('absensi.pulang')->middleware('throttle:10,1');
+    });
+    Route::middleware('role:admin')->group(function(){
+        Route::get('/guru',[GuruController::class,'index'])->name('gurus.index');
+        Route::get('/guru/tambah',[GuruController::class,'create'])->name('gurus.create');
+        Route::post('/guru',[GuruController::class,'store'])->name('gurus.store');
+        Route::get('/guru/{guru}/edit',[GuruController::class,'edit'])->name('gurus.edit');
+        Route::put('/guru/{guru}',[GuruController::class,'update'])->name('gurus.update');
+        Route::patch('/guru/{guru}/aktif',[GuruController::class,'toggle'])->name('gurus.toggle');
+        Route::get('/jadwal',[JadwalController::class,'index'])->name('jadwal.index');
+        Route::put('/jadwal/{guru}',[JadwalController::class,'update'])->name('jadwal.update');
+        Route::get('/absensi/tambah',[AbsensiController::class,'create'])->name('absensi.create');
+        Route::post('/absensi',[AbsensiController::class,'store'])->name('absensi.store');
+        Route::get('/absensi/{record}/edit',[AbsensiController::class,'edit'])->name('absensi.edit');
+        Route::put('/absensi/{record}',[AbsensiController::class,'update'])->name('absensi.update');
+        Route::get('/akun',[AccountController::class,'index'])->name('accounts.index');
+        Route::post('/akun',[AccountController::class,'store'])->name('accounts.store');
+        Route::put('/akun/{user}',[AccountController::class,'update'])->name('accounts.update');
+    });
+    Route::middleware('role:bendahara')->group(function(){
+        Route::get('/komponen-gaji',[PayrollController::class,'komponen'])->name('payroll.komponen');
+        Route::put('/komponen-gaji/{guru}',[PayrollController::class,'saveKomponen'])->name('payroll.komponen.update');
+        Route::post('/penggajian/hitung',[PayrollController::class,'hitung'])->name('payroll.hitung');
+        Route::post('/penggajian/{record}/sahkan',[PayrollController::class,'sahkan'])->name('payroll.sahkan');
+    });
+    Route::middleware('role:admin,bendahara')->group(function(){
+        Route::get('/laporan',[ReportController::class,'index'])->name('reports.index');
+        Route::get('/laporan/{type}.csv',[ReportController::class,'csv'])->name('reports.csv');
+    });
+});
