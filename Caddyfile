@@ -1,5 +1,16 @@
+{
+    admin off
+}
+
 :{$PORT:80} {
     root * /app/public
     encode zstd gzip
+
+    # Sajikan file statis (CSS, JS, Gambar) secara langsung jika ada
+    file_server
+
+    # Jika file tidak ada, arahkan request ke index.php
+    try_files {path} {path}/ /index.php?{query}
+
     php_server
 }
