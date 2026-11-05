@@ -10,7 +10,7 @@ vendor
 !.env.example
 auth.json
 
-public/build
+# public/build 
 public/hot
 public/storage
 
