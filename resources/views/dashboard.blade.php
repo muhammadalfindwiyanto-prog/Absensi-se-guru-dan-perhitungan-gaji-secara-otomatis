@@ -33,13 +33,14 @@
         </div>
         <div class="hero-buttons">
             @if(!$todayRecord)
-                <form action="{{ route('absensi.masuk') }}" method="POST">
-                    @csrf
-                    <button class="btn white" type="submit">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Absen Masuk
-                    </button>
-                </form>
+                <button class="btn white" type="button" onclick="openAbsenModal()" id="btn-open-absen">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Catat Absensi (Hadir / Izin)
+                </button>
+            @elseif(in_array($todayRecord->status, ['izin', 'sakit', 'alpa']))
+                <span class="badge light" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:9px 15px;font-size:12px;">
+                    ✓ Status: {{ ucfirst($todayRecord->status) }} tercatat
+                </span>
             @elseif($todayRecord->jam_masuk && !$todayRecord->jam_pulang)
                 <form action="{{ route('absensi.pulang') }}" method="POST">
                     @csrf
@@ -53,6 +54,83 @@
             @endif
         </div>
     </div>
+
+    {{-- MODAL PILIHAN ABSENSI (HADIR ATAU IZIN) --}}
+    @if(!$todayRecord)
+    <div id="modal-absen" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAbsenModal()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-absen-title">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">ABSENSI GURU</span>
+                    <h3 id="modal-absen-title">Pilih Kehadiran Hari Ini</h3>
+                    <p>{{ now()->translatedFormat('l, d F Y') }}</p>
+                </div>
+                <button type="button" class="modal-close" onclick="closeAbsenModal()" aria-label="Tutup">×</button>
+            </div>
+
+            <div class="modal-body">
+                {{-- OPSI 1: HADIR --}}
+                <div class="absen-choice-card">
+                    <div class="absen-choice-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="absen-choice-content">
+                        <strong>Hadir (Masuk Mengajar)</strong>
+                        <p>Catat kehadiran masuk Anda di madrasah sesuai waktu saat ini.</p>
+                        <form action="{{ route('absensi.masuk') }}" method="POST" style="margin-top:10px;">
+                            @csrf
+                            <button type="submit" class="btn primary sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Rekam Hadir Masuk
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- OPSI 2: IZIN --}}
+                <div class="absen-choice-card">
+                    <div class="absen-choice-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="absen-choice-content">
+                        <strong>Izin Tidak Hadir</strong>
+                        <p>Ajukan izin jika Anda berhalangan mengajar (urusan dinas, keluarga, atau keperluan lain).</p>
+                        <form action="{{ route('absensi.izin') }}" method="POST" style="margin-top:10px;">
+                            @csrf
+                            <div class="field" style="margin-bottom:8px;">
+                                <input type="text" name="keterangan" placeholder="Alasan izin (contoh: Acara keluarga, dinas luar, dll)" style="font-size:12px;padding:8px 10px;">
+                            </div>
+                            <button type="submit" class="btn secondary sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                Ajukan Izin Hari Ini
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openAbsenModal() {
+            const m = document.getElementById('modal-absen');
+            if (m) {
+                m.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        function closeAbsenModal() {
+            const m = document.getElementById('modal-absen');
+            if (m) {
+                m.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAbsenModal();
+        });
+    </script>
+    @endif
 
     {{-- Statistik Bulanan --}}
     <div class="metrics four">

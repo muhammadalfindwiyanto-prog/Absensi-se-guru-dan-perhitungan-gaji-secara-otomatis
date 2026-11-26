@@ -14,6 +14,7 @@ Route::middleware('auth')->group(function(){
     Route::middleware('role:guru')->group(function(){
         Route::post('/absensi/masuk',[AbsensiController::class,'masuk'])->name('absensi.masuk')->middleware('throttle:10,1');
         Route::post('/absensi/pulang',[AbsensiController::class,'pulang'])->name('absensi.pulang')->middleware('throttle:10,1');
+        Route::post('/absensi/izin',[AbsensiController::class,'izin'])->name('absensi.izin')->middleware('throttle:10,1');
     });
     Route::middleware('role:admin')->group(function(){
         Route::get('/guru',[GuruController::class,'index'])->name('gurus.index');

@@ -30,6 +30,21 @@ class AbsensiController extends Controller {
         $absensi->update(['jam_pulang'=>now()->format('H:i:s')]);
         return back()->with('success','Absensi pulang berhasil direkam.');
     }
+    public function izin(Request $request){
+        $guru=$request->user()->guru;abort_unless($guru && $guru->aktif,403,'Akun guru tidak aktif.');
+        $tanggal=now()->toDateString();
+        if(Absensi::where('guru_id',$guru->id)->whereDate('tanggal',$tanggal)->exists())return back()->with('error','Absensi hari ini sudah tercatat.');
+        $request->validate(['keterangan'=>'nullable|string|max:500']);
+        Absensi::create([
+            'guru_id'=>$guru->id,
+            'tanggal'=>$tanggal,
+            'jam_masuk'=>null,
+            'jam_pulang'=>null,
+            'status'=>'izin',
+            'keterangan'=>$request->filled('keterangan')?$request->input('keterangan'):'Izin tidak hadir',
+        ]);
+        return back()->with('success','Pengajuan izin hari ini berhasil dicatat.');
+    }
     public function create(){return view('absensi.form',['record'=>new Absensi,'gurus'=>Guru::orderBy('nama')->get()]);}
     private function rules(?Absensi $record=null):array{return [
         'guru_id'=>'required|exists:gurus,id','tanggal'=>'required|date|before_or_equal:today',
