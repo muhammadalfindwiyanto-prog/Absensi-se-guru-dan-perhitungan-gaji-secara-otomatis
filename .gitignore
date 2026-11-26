@@ -22,3 +22,12 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+.vercel
+.env*
+
+.agents/
+boost.json
+opencode.json
+kit/
+AGENTS.md

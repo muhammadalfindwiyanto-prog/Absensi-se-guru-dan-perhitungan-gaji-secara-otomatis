@@ -1,18 +1,30 @@
+
 FROM dunglas/frankenphp:1-php8.4-alpine
 
-# Install Node.js & npm di container FrankenPHP
+# Install Node.js dan NPM
 RUN apk add --no-cache nodejs npm
 
 WORKDIR /app
 
-RUN install-php-extensions pdo_mysql mbstring intl zip bcmath opcache
+# Install ekstensi PHP
+RUN install-php-extensions \
+    pdo_mysql \
+    mbstring \
+    intl \
+    zip \
+    bcmath \
+    opcache
 
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# PHP production configuration
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# Salin seluruh project
 COPY . .
 
+# Siapkan direktori Laravel
 RUN mkdir -p \
     bootstrap/cache \
     storage/framework/cache/data \
@@ -20,25 +32,39 @@ RUN mkdir -p \
     storage/framework/views \
     storage/logs
 
+# Install dependency Laravel
 RUN composer install \
     --no-dev \
     --prefer-dist \
     --no-interaction \
     --optimize-autoloader
 
-# Install dependensi frontend & build aset Vite langsung di container
-RUN npm ci || npm install
+# Install dependency frontend
+RUN npm ci
+
+# Build CSS dan JavaScript Vite
 RUN npm run build
 
+# Pastikan manifest Vite berhasil dibuat
+RUN test -f public/build/manifest.json
+
+# Salin konfigurasi Caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 
+# Konfigurasi production
 ENV PORT=80
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
+
+
+# Gunakan database Aiven untuk session dan cache
 ENV SESSION_DRIVER=database
 ENV CACHE_STORE=database
 ENV QUEUE_CONNECTION=sync
+
+
+# Sertifikat SSL Aiven
 ENV MYSQL_ATTR_SSL_CA=/app/certs/ca.pem
 
 EXPOSE 80

@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Foundation\Application;
@@ -11,8 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->trustProxies(at: '*');
-    $middleware->alias(['role' => \App\Http\Middleware\RequireRole::class]);
-})
+        // Percayai reverse proxy Vercel.
+        $middleware->trustProxies(at: '*');
+
+        // Alias middleware role.
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RequireRole::class,
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
-    })->create();
+        //
+    })
+    ->create();
